@@ -9,6 +9,7 @@ module ActiveEncode
       # Current state of the encoding process
       attr_accessor :state
       attr_accessor :errors
+      attr_accessor :exit_status
 
       attr_accessor :created_at
       attr_accessor :updated_at

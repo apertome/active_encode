@@ -38,6 +38,7 @@ module ActiveEncode
           state: encode.state,
           adapter: encode.class.engine_adapter.class.name,
           title: encode.input.url.to_s,
+          # exit_status: encode.exit_status,
           # Need to ensure that these values come through or else validations will fail
           created_at: encode.created_at,
           updated_at: encode.updated_at,

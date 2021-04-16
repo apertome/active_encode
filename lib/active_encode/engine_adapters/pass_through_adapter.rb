@@ -65,6 +65,7 @@ module ActiveEncode
 
         new_encode.percent_complete = 1
         new_encode.state = :running
+        new_encode.exit_status = -5
         new_encode.errors = []
 
         new_encode

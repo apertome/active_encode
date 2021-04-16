@@ -60,6 +60,7 @@ module ActiveEncode
         new_encode.state = :running
         new_encode.percent_complete = 1
         new_encode.errors = []
+        new_encode.exit_status = -1
 
         # Run the ffmpeg command and save its pid
         command = ffmpeg_command(input_url, new_encode.id, options)
@@ -91,6 +92,10 @@ module ActiveEncode
         encode.percent_complete = calculate_percent_complete encode
 
         pid = get_pid(id)
+        #status = Process.wait(pid)
+        #encode.status = status
+        encode.exit_status = $?
+        #encode.exit_status = -3
         encode.input.id = pid if pid.present?
 
         encode.current_operations = []
@@ -194,6 +199,8 @@ module ActiveEncode
           output.id = "#{encode.input.id}-#{output.label}"
           output.created_at = encode.created_at
           output.updated_at = File.mtime file_path
+
+          output.exit_status = encode.exit_status
 
           # Extract technical metadata from output file
           metadata_path = working_path("output_metadata-#{output.label}", id)
