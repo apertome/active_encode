@@ -27,6 +27,7 @@ module ActiveEncode
         new_encode.created_at = Time.now.utc
         new_encode.updated_at = Time.now.utc
         new_encode.current_operations = []
+        new_encode.exit_status = -4
         new_encode.output = []
 
         # Create a working directory that holds all output files related to the encode
@@ -42,9 +43,14 @@ module ActiveEncode
                       end
         `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{input_url}"`
         new_encode.input = build_input new_encode
+        puts "New encode object:"
+        pp new_encode
+        puts "Writing initial exit status code ... #{new_encode.exit_status}"
+        write_exit_status new_encode
 
         if new_encode.input.duration.blank?
           new_encode.state = :failed
+          new_encode.exit_status = 4
           new_encode.percent_complete = 1
 
           new_encode.errors = if new_encode.input.file_size.blank?
@@ -53,6 +59,7 @@ module ActiveEncode
                                 ["Error inspecting input: #{input_url}"]
                               end
 
+          write_exit_status new_encode
           write_errors new_encode
           return new_encode
         end
@@ -60,24 +67,59 @@ module ActiveEncode
         new_encode.state = :running
         new_encode.percent_complete = 1
         new_encode.errors = []
-        new_encode.exit_status = -1
+        #new_encode.exit_status = -1
+        #write_exit_status new_encode
+        #input_url2 = "file:///home/mj82/src/active_encode_test/media/arvo_pinwheels_20210412_171417_truncated.mp4"
 
         # Run the ffmpeg command and save its pid
         command = ffmpeg_command(input_url, new_encode.id, options)
+        exit_status_file = working_path("exit_status.code", new_encode.id)
+        puts "exit_status_file #{exit_status_file}"
+        command = "#{command}; echo $? > #{exit_status_file}"
+        puts "Command: #{command}"
         pid = Process.spawn(command, err: working_path('error.log', new_encode.id))
+        puts "pid #{pid}"
+
+### IDEA: spawn within a spawn??? ####
+
         File.open(working_path("pid", new_encode.id), 'w') { |file| file.write pid }
         new_encode.input.id = pid
+        #if ( !pid.present? )
+        #  code = new_encode.exit_status
+        #end
+        # Get the status (this means wait, opposite of detach)
+        status = Process.wait(pid)
+        #status = Process.wait(pid, Process::WNOHANG)
+        #puts "pid.present?", pid.present?
+        #
+        puts "$?", $?
+
+        #code = $?.exitstatus
+
+        code = read_exit_status (new_encode.id)
+
+        puts "C0DE: #{code}"
+        new_encode.exit_status = code
+        #puts "exit_status code" + code.to_s
+        ##write_exit_status new_encode
+        write_errors new_encode
 
         new_encode
-      rescue StandardError => e
-        new_encode.state = :failed
-        new_encode.percent_complete = 1
-        new_encode.errors = [e.full_message]
-        write_errors new_encode
-        return new_encode
-      ensure
+# TODO: reintegrate `rescue` section
+      #rescue StandardError => e
+        #new_encode.state = :failed
+        #status = Process.wait(pid)
+        #new_encode.exit_status = status
+        #pp status
+        #pp $?
+        #new_encode.percent_complete = 1
+        #new_encode.exit_status = 1
+        #new_encode.errors = [e.full_message]
+        #write_errors new_encode
+        #return new_encode
+      #ensure
         # Prevent zombie process
-        Process.detach(pid) if pid.present?
+        # Process.detach(pid) if pid.present?
       end
 
       # Return encode object from file system
@@ -94,13 +136,14 @@ module ActiveEncode
         pid = get_pid(id)
         #status = Process.wait(pid)
         #encode.status = status
-        encode.exit_status = $?
+        #encode.exit_status = $?.exitstatus
         #encode.exit_status = -3
         encode.input.id = pid if pid.present?
 
         encode.current_operations = []
         encode.created_at, encode.updated_at = get_times encode.id
         encode.errors = read_errors(id)
+        encode.exit_status = read_exit_status(id)
         if encode.errors.present?
           encode.state = :failed
         elsif running? pid
@@ -166,6 +209,20 @@ module ActiveEncode
         File.write(working_path("error.log", encode.id), encode.errors.join("\n"))
       end
 
+      def write_exit_status(encode)
+        File.write(working_path("exit_status.code", encode.id), encode.exit_status)
+      end
+
+      def read_exit_status(id)
+        exit_path = working_path("exit_status.code", id)
+        exit_status = File.read(exit_path) if File.file? exit_path
+        if exit_status.present?
+          exit_status.to_i
+        else
+          -6
+        end
+      end
+
       def read_errors(id)
         err_path = working_path("error.log", id)
         error = File.read(err_path) if File.file? err_path
@@ -200,7 +257,7 @@ module ActiveEncode
           output.created_at = encode.created_at
           output.updated_at = File.mtime file_path
 
-          output.exit_status = encode.exit_status
+          #output.exit_status = encode.exit_status
 
           # Extract technical metadata from output file
           metadata_path = working_path("output_metadata-#{output.label}", id)

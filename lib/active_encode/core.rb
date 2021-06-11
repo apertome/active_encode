@@ -80,7 +80,7 @@ module ActiveEncode
         @options = encode.options
         @state = encode.state
         @errors = encode.errors
-        @exit_status = encode.exit_status
+        @exit_status = encode.exit_status || -3
         @created_at = encode.created_at
         @updated_at = encode.updated_at
         @current_operations = encode.current_operations
