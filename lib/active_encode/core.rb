@@ -23,6 +23,8 @@ module ActiveEncode
 
       attr_accessor :current_operations
       attr_accessor :percent_complete
+
+      attr_accessor :exit_status
     end
 
     module ClassMethods
