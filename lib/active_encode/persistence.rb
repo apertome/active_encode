@@ -28,6 +28,7 @@ module ActiveEncode
     private
 
       def persist(encode_attributes)
+        ### LOOK AT THIS ######
         model = ActiveEncode::EncodeRecord.find_or_initialize_by(global_id: encode_attributes[:global_id])
         model.update(encode_attributes) # Don't fail if persisting doesn't succeed?
       end
