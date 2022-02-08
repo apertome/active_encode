@@ -9,6 +9,7 @@ module ActiveEncode
       WORK_DIR = ENV["ENCODE_WORK_DIR"] || "encodes" # Should read from config
       MEDIAINFO_PATH = ENV["MEDIAINFO_PATH"] || "mediainfo"
       FFMPEG_PATH = ENV["FFMPEG_PATH"] || "ffmpeg"
+      CHECKSUM_PATH = ENV["CHECKSUM_PATH"] || "sha256sum"
 
       def create(input_url, options = {})
         # Decode file uris for ffmpeg (mediainfo works either way)
@@ -178,6 +179,7 @@ module ActiveEncode
         input.assign_tech_metadata(metadata)
         input.created_at = encode.created_at
         input.updated_at = encode.created_at
+        input.checksum = encode.checksum
         input.id = "N/A"
 
         input
@@ -198,6 +200,8 @@ module ActiveEncode
           # Extract technical metadata from output file
           metadata_path = working_path("output_metadata-#{output.label}", id)
           `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{metadata_path} #{output.url}` unless File.file? metadata_path
+          puts "sanitized_filename: #{sanitized_filename}"
+          `#{CHECKSUM_PATH} #{sanitized_filename}   > /tmp/temp.sha256`
           output.assign_tech_metadata(get_tech_metadata(metadata_path))
 
           outputs << output
@@ -283,6 +287,7 @@ module ActiveEncode
           frame_rate: get_xpath_text(doc, '//FrameRate/text()', :to_f),
           duration: duration,
           file_size: get_xpath_text(doc, '//FileSize/text()', :to_i),
+          checksum: get_xpath_text(doc, '//Checksum/text()', :to_s),
           audio_codec: get_xpath_text(doc, '//track[@type="Audio"]/CodecID/text()', :to_s),
           audio_bitrate: get_xpath_text(doc, '//track[@type="Audio"]/BitRate/text()', :to_i),
           video_codec: get_xpath_text(doc, '//track[@type="Video"]/CodecID/text()', :to_s),

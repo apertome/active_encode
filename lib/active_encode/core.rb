@@ -21,6 +21,10 @@ module ActiveEncode
       # Encode options
       attr_accessor :options
 
+      # Checksum attribute
+      attr_accessor :checksum
+
+
       attr_accessor :current_operations
       attr_accessor :percent_complete
     end

@@ -7,6 +7,8 @@ module ActiveEncode
     attr_accessor :id
     attr_accessor :url
     attr_accessor :label
+    attr_accessor :checksum
+
 
     def valid?
       id.present? && url.present? && label.present? &&
