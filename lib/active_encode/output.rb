@@ -7,7 +7,7 @@ module ActiveEncode
     attr_accessor :id
     attr_accessor :url
     attr_accessor :label
-    attr_accessor :checksum
+    attr_accessor :file_checksum
 
 
     def valid?

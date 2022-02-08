@@ -16,7 +16,7 @@ module ActiveEncode
       # In bytes
       attr_accessor :file_size
 
-      attr_accessor :checksum
+      attr_accessor :file_checksum
 
       attr_accessor :audio_codec
       attr_accessor :video_codec
@@ -25,7 +25,7 @@ module ActiveEncode
     end
 
     def assign_tech_metadata(metadata)
-      [:width, :height, :frame_rate, :duration, :file_size, :checksum,
+      [:width, :height, :frame_rate, :duration, :file_size, :file_checksum,
        :audio_codec, :video_codec, :audio_bitrate, :video_bitrate].each do |field|
         send("#{field}=", metadata[field]) if metadata.key?(field)
       end

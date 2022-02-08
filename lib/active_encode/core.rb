@@ -22,7 +22,7 @@ module ActiveEncode
       attr_accessor :options
 
       # Checksum attribute
-      attr_accessor :checksum
+      attr_accessor :file_checksum
 
 
       attr_accessor :current_operations
