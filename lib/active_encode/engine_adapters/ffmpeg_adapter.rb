@@ -192,7 +192,7 @@ module ActiveEncode
         # `#{CHECKSUM_PATH} #{infile}   > /tmp/temp.sha1"`
         # TODO: Add calculation of Checksum
         # Should we do this here in the ffmpeg adapter, or in a common spot that all adapters can use?
-        input.file_checksum = checksum_value
+        input.file_checksum = encode.file_checksum || checksum_value
 
         puts "input"
         pp input
@@ -216,6 +216,7 @@ module ActiveEncode
           sanitized_filename = sanitize_base encode.input.url
           output.label = file_path[/#{Regexp.quote(sanitized_filename)}\-(.*?)#{Regexp.quote(File.extname(file_path))}$/, 1]
           output.id = "#{encode.input.id}-#{output.label}"
+          # output.file_checksum = encode.input.file_checksum
           output.created_at = encode.created_at
           output.updated_at = File.mtime file_path
 
