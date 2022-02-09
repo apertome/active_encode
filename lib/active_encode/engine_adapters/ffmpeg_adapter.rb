@@ -2,6 +2,7 @@
 require 'fileutils'
 require 'nokogiri'
 require 'shellwords'
+require 'addressable/uri'
 
 module ActiveEncode
   module EngineAdapters
@@ -15,12 +16,12 @@ module ActiveEncode
         # Decode file uris for ffmpeg (mediainfo works either way)
         case input_url
         when /^file\:\/\/\//
-          input_url = URI.decode(input_url)
+          input_url = Addressable::URI.unescape(input_url)
         when /^s3\:\/\//
           require 'file_locator'
 
           s3_object = FileLocator::S3File.new(input_url).object
-          input_url = URI.parse(s3_object.presigned_url(:get))
+          input_url = Addressable::URI.parse(s3_object.presigned_url(:get))
         end
 
         new_encode = ActiveEncode::Base.new(input_url, options)
@@ -179,7 +180,28 @@ module ActiveEncode
         input.assign_tech_metadata(metadata)
         input.created_at = encode.created_at
         input.updated_at = encode.created_at
-        input.file_checksum = encode.file_checksum || "asdf"
+
+
+
+
+        infile = Addressable::URI.parse( input.url ).path
+        puts "INFILE: #{infile}"
+        checksum_value = `#{CHECKSUM_PATH} #{infile}`.split(/\s+/).first
+        puts "CHECKSUM #{checksum_value}"
+
+        # `#{CHECKSUM_PATH} #{infile}   > /tmp/temp.sha1"`
+        # TODO: Add calculation of Checksum
+        # Should we do this here in the ffmpeg adapter, or in a common spot that all adapters can use?
+        input.file_checksum = checksum_value
+
+        puts "input"
+        pp input
+
+        puts "metadata"
+        pp metadata
+
+
+
         input.id = "N/A"
 
         input
@@ -200,8 +222,8 @@ module ActiveEncode
           # Extract technical metadata from output file
           metadata_path = working_path("output_metadata-#{output.label}", id)
           `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{metadata_path} #{output.url}` unless File.file? metadata_path
-          puts "sanitized_filename: #{sanitized_filename}"
-          puts "#{CHECKSUM_PATH} #{sanitized_filename}   > /tmp/temp.sha256"
+          # puts "sanitized_filename: #{sanitized_filename}"
+          # puts "#{CHECKSUM_PATH} #{sanitized_filename}   > /tmp/temp.sha256"
           output.assign_tech_metadata(get_tech_metadata(metadata_path))
 
           outputs << output
