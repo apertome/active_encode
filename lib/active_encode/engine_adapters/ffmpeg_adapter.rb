@@ -45,6 +45,9 @@ module ActiveEncode
         `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{input_url}"`
         new_encode.input = build_input new_encode
 
+    puts "NEW_ENCODE after build-in-put new-encode"
+    pp new_encode
+
         if new_encode.input.duration.blank?
           new_encode.state = :failed
           new_encode.percent_complete = 1
@@ -226,12 +229,17 @@ module ActiveEncode
 
           # Extract technical metadata from output file
           metadata_path = working_path("output_metadata-#{output.label}", id)
-          output.file_checksum = calculate_file_checksum output.url
+
 
           `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{metadata_path} #{output.url}` unless File.file? metadata_path
           # puts "sanitized_filename: #{sanitized_filename}"
           # puts "#{CHECKSUM_PATH} #{sanitized_filename}   > /tmp/temp.sha256"
           output.assign_tech_metadata(get_tech_metadata(metadata_path))
+
+          output.file_checksum = calculate_file_checksum output.url
+          puts "OUTPUT"
+          pp output
+
 
           outputs << output
         end
