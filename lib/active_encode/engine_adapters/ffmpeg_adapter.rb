@@ -65,6 +65,7 @@ module ActiveEncode
 
         # Run the ffmpeg command and save its pid
         command = ffmpeg_command(input_url, new_encode.id, options)
+        puts "COMMAND #{command}"
         pid = Process.spawn(command, err: working_path('error.log', new_encode.id))
         File.open(working_path("pid", new_encode.id), 'w') { |file| file.write pid }
         new_encode.input.id = pid
@@ -182,23 +183,26 @@ module ActiveEncode
         input.updated_at = encode.created_at
 
 
+        #infile = Addressable::URI.parse( input.url ).path
+        #puts "INFILE: #{infile}"
+        #checksum_value = `#{CHECKSUM_PATH} #{infile}`.split(/\s+/).first
+        # checksum_value=nil
+        checksum_value = calculate_file_checksum( input.url )
+        input.file_checksum = checksum_value
+        #puts "CHECKSUM after fun #{checksum_value}"
 
 
-        infile = Addressable::URI.parse( input.url ).path
-        puts "INFILE: #{infile}"
-        checksum_value = `#{CHECKSUM_PATH} #{infile}`.split(/\s+/).first
-        puts "CHECKSUM #{checksum_value}"
 
         # `#{CHECKSUM_PATH} #{infile}   > /tmp/temp.sha1"`
         # TODO: Add calculation of Checksum
         # Should we do this here in the ffmpeg adapter, or in a common spot that all adapters can use?
-        input.file_checksum = encode.file_checksum || checksum_value
+        #input.file_checksum = encode.file_checksum || checksum_value
 
         puts "input"
         pp input
 
-        puts "metadata"
-        pp metadata
+        #puts "metadata"
+        #pp metadata
 
 
 
@@ -222,6 +226,8 @@ module ActiveEncode
 
           # Extract technical metadata from output file
           metadata_path = working_path("output_metadata-#{output.label}", id)
+          output.file_checksum = calculate_file_checksum output.url
+
           `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{metadata_path} #{output.url}` unless File.file? metadata_path
           # puts "sanitized_filename: #{sanitized_filename}"
           # puts "#{CHECKSUM_PATH} #{sanitized_filename}   > /tmp/temp.sha256"
@@ -243,6 +249,7 @@ module ActiveEncode
           "#{k}: #{v}\r\n"
         end.join
         header_opt = "-headers '#{header_opt}'" if header_opt.present?
+        puts "input_url #{input_url}"
         "#{FFMPEG_PATH} #{header_opt} -y -loglevel error -progress #{working_path('progress', id)} -i \"#{input_url}\" #{output_opt}"
       end
 
@@ -297,6 +304,25 @@ module ActiveEncode
         return nil unless data.present? && key.present?
         ri = data.rindex(key) + key.length
         data[ri..data.index("\n", ri) - 1]
+      end
+
+      def calculate_file_checksum(file_path)
+        checksum_value = nil
+        puts "FILE_PATH #{file_path}"
+        begin
+          infile = Shellwords.escape( Addressable::URI.parse( file_path ).path )
+          puts "INFILE #{infile}"
+
+          if File.file? infile
+            checksum_value = `#{CHECKSUM_PATH} #{infile}`.split(/\s+/).first
+            checksum_value = "SHA1:#{checksum_value}"
+          end
+        rescue NoMethodError => er
+            # puts "Got to nomethoderror rescue"
+            # pp er
+
+        end
+        checksum_value
       end
 
       def get_tech_metadata(file_path)

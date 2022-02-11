@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 require 'rails_helper'
 require 'active_encode/spec/shared_specs'
+require 'addressable/uri'
 
 describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   around do |example|
@@ -42,7 +43,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
     {
       audio_bitrate: 171_030,
       audio_codec: 'mp4a-40-2',
-      duration: 6315,
+      duration: 6315.0,      
       file_size: 199_160,
       frame_rate: 23.719,
       height: 110.0,
@@ -95,6 +96,8 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       let(:missing_job) { ActiveEncode::Base.create(missing_file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
 
       it "returns the encode with correct error" do
+        puts "missing_job"
+        pp missing_job
         expect(missing_job.errors).to include("#{missing_file} does not exist or is not accessible")
         expect(missing_job.percent_complete).to be 1
       end
@@ -129,7 +132,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       end
 
       context 'when uri encoded' do
-        let(:file_with_space) { URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s) }
+        let(:file_with_space) { Addressable::URI.escape("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s) }
 
         it "does not have errors" do
           sleep 2
