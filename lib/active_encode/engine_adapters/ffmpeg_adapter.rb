@@ -204,6 +204,11 @@ module ActiveEncode
         puts "input"
         pp input
 
+        wp =  working_path(input.url, encode.id)
+        puts "working_path wp"
+        pp wp
+        
+
         #puts "metadata"
         #pp metadata
 
@@ -258,7 +263,7 @@ module ActiveEncode
         end.join
         header_opt = "-headers '#{header_opt}'" if header_opt.present?
         puts "input_url #{input_url}"
-        puts "working_path file_name, id #{working_path(file_name, id)}"
+
         "#{FFMPEG_PATH} #{header_opt} -y -loglevel error -progress #{working_path('progress', id)} -i \"#{input_url}\" #{output_opt}"
       end
 
