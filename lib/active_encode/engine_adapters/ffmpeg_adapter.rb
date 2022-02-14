@@ -325,6 +325,8 @@ module ActiveEncode
             checksum_value = `#{CHECKSUM_PATH} #{infile}`.split(/\s+/).first
             checksum_value = "SHA1:#{checksum_value}"
           end
+          puts "checksum_value_in_calculate"
+          pp checksum_value
         rescue NoMethodError => er
             # puts "Got to nomethoderror rescue"
             # pp er
