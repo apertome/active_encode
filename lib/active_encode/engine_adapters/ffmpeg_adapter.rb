@@ -190,7 +190,11 @@ module ActiveEncode
         #puts "INFILE: #{infile}"
         #checksum_value = `#{CHECKSUM_PATH} #{infile}`.split(/\s+/).first
         # checksum_value=nil
-        checksum_value = calculate_file_checksum( input.url )
+        wp =  working_path(input.url, encode.id)
+        puts "working_path wp"
+        pp wp
+
+        checksum_value = calculate_file_checksum( wp )
         input.file_checksum = checksum_value
         #puts "CHECKSUM after fun #{checksum_value}"
 
@@ -204,10 +208,8 @@ module ActiveEncode
         puts "input"
         pp input
 
-        wp =  working_path(input.url, encode.id)
-        puts "working_path wp"
-        pp wp
-        
+
+
 
         #puts "metadata"
         #pp metadata
