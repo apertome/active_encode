@@ -190,7 +190,8 @@ module ActiveEncode
         #puts "INFILE: #{infile}"
         #checksum_value = `#{CHECKSUM_PATH} #{infile}`.split(/\s+/).first
         # checksum_value=nil
-        wp =  working_path(input.url, encode.id)
+        sanitized_filename = sanitize_base input.url
+        wp =  working_path(sanitized_filename, encode.id)
         puts "working_path wp"
         pp wp
 
