@@ -45,6 +45,17 @@ module ActiveEncode
         `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{input_url}"`
         new_encode.input = build_input new_encode
 
+puts "input_url: #{input_url}"
+  checksum_value = calculate_file_checksum input_url
+
+puts "checksum_value: #{checksum_value}"
+new_encode.input.file_checksum = checksum_value
+
+      File.open(working_path("file_checksum", new_encode.id), 'w') { |file| file.write checksum_value }
+puts "wrote checksum to file #{working_path("file_checksum", new_encode.id)}"
+`ls -l #{working_path("", new_encode.id)}`
+
+
     puts "NEW_ENCODE after build-in-put new-encode"
     pp new_encode
 
@@ -98,6 +109,9 @@ module ActiveEncode
 
         pid = get_pid(id)
         encode.input.id = pid if pid.present?
+
+        #file_checksum = get_file_checksum(id)
+        #encode.input.file_checksum = file_checksum if file_checksum.present?
 
         encode.current_operations = []
         encode.created_at, encode.updated_at = get_times encode.id
@@ -191,12 +205,16 @@ module ActiveEncode
         #checksum_value = `#{CHECKSUM_PATH} #{infile}`.split(/\s+/).first
         # checksum_value=nil
         sanitized_filename = sanitize_base input.url
-        wp =  working_path(sanitized_filename, encode.id)
+        wp =  working_path("", encode.id)
         puts "working_path wp"
         pp wp
+        puts `ls -la #{wp}`
 
-        checksum_value = calculate_file_checksum( wp )
-        input.file_checksum = checksum_value
+        # checksum_value = calculate_file_checksum( wp )
+        puts "input.file_checksum = get_file_checksum encode.id"
+        input.file_checksum = get_file_checksum encode.id
+        puts input.file_checksum
+
         #puts "CHECKSUM after fun #{checksum_value}"
 
 
@@ -206,7 +224,7 @@ module ActiveEncode
         # Should we do this here in the ffmpeg adapter, or in a common spot that all adapters can use?
         #input.file_checksum = encode.file_checksum || checksum_value
 
-        puts "input"
+        puts "input ffmpeg build_inputs"
         pp input
 
 
@@ -280,6 +298,10 @@ module ActiveEncode
 
       def get_pid(id)
         File.read(working_path("pid", id)).remove("\n") if File.file? working_path("pid", id)
+      end
+
+      def get_file_checksum(id)
+        File.read(working_path("file_checksum", id)).remove("\n") if File.file? working_path("file_checksum", id)
       end
 
       def working_path(path, id)
