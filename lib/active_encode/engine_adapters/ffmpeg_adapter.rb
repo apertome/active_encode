@@ -42,6 +42,8 @@ module ActiveEncode
                       else
                         ""
                       end
+        puts "CURL_OPTION"
+        pp curl_option
         `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{input_url}"`
         new_encode.input = build_input new_encode
 
@@ -193,7 +195,7 @@ puts "wrote checksum to file #{working_path("file_checksum", new_encode.id)}"
 
       def build_input(encode)
         input = ActiveEncode::Input.new
-        metadata = get_tech_metadata(working_path("input_metadata", encode.id))
+        metadata = get_tech_metadata(working_path("input_metadata", encode.id), encode.id)
         input.url = metadata[:url]
         input.assign_tech_metadata(metadata)
         input.created_at = encode.created_at
@@ -260,7 +262,7 @@ puts "wrote checksum to file #{working_path("file_checksum", new_encode.id)}"
           `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{metadata_path} #{output.url}` unless File.file? metadata_path
           # puts "sanitized_filename: #{sanitized_filename}"
           # puts "#{CHECKSUM_PATH} #{sanitized_filename}   > /tmp/temp.sha256"
-          output.assign_tech_metadata(get_tech_metadata(metadata_path))
+          output.assign_tech_metadata(get_tech_metadata(metadata_path, id))
 
           output.file_checksum = calculate_file_checksum output.url
           puts "OUTPUT"
@@ -366,10 +368,11 @@ puts "wrote checksum to file #{working_path("file_checksum", new_encode.id)}"
         checksum_value
       end
 
-      def get_tech_metadata(file_path)
+      def get_tech_metadata(file_path, id)
         doc = Nokogiri::XML File.read(file_path)
         doc.remove_namespaces!
         duration = get_xpath_text(doc, '//Duration/text()', :to_f)
+        checksum =  get_file_checksum id
         duration *= 1000 unless duration.nil? # Convert to milliseconds
         { url: get_xpath_text(doc, '//media/@ref', :to_s),
           width: get_xpath_text(doc, '//Width/text()', :to_f),
@@ -377,7 +380,7 @@ puts "wrote checksum to file #{working_path("file_checksum", new_encode.id)}"
           frame_rate: get_xpath_text(doc, '//FrameRate/text()', :to_f),
           duration: duration,
           file_size: get_xpath_text(doc, '//FileSize/text()', :to_i),
-          file_checksum: get_xpath_text(doc, '//FileChecksum/text()', :to_s),
+          file_checksum: checksum,
           audio_codec: get_xpath_text(doc, '//track[@type="Audio"]/CodecID/text()', :to_s),
           audio_bitrate: get_xpath_text(doc, '//track[@type="Audio"]/BitRate/text()', :to_i),
           video_codec: get_xpath_text(doc, '//track[@type="Video"]/CodecID/text()', :to_s),
