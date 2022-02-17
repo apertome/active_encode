@@ -89,7 +89,8 @@ module ActiveEncode
         #  code = new_encode.exit_status
         #end
         # Get the status (this means wait, opposite of detach)
-        status = Process.wait(pid)
+        Process.detach(pid) if pid.present?
+        # status = Process.wait(pid)
         #status = Process.wait(pid, Process::WNOHANG)
         #puts "pid.present?", pid.present?
         #
