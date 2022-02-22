@@ -21,8 +21,11 @@ module ActiveEncode
           require 'file_locator'
 
           s3_object = FileLocator::S3File.new(input_url).object
-          input_url = Addressable::URI.unencode( URI.parse(s3_object.presigned_url(:get)) )
+          input_url = URI.parse(s3_object.presigned_url(:get))
+          # input_url = Addressable::URI.unencode( URI.parse(s3_object.presigned_url(:get)).to_string )
         end
+        puts "NEW_ENCODE INPUT_URL: #{input_url}"
+        pp input_url
 
         new_encode = ActiveEncode::Base.new(input_url, options)
         new_encode.id = SecureRandom.uuid
