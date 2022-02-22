@@ -258,6 +258,8 @@ module ActiveEncode
           output = ActiveEncode::Output.new
           output.url = "file://#{file_path}"
           sanitized_filename = sanitize_base encode.input.url
+          puts "sanitize_base filname after"
+          pp sanitized_filename
           output.label = file_path[/#{Regexp.quote(sanitized_filename)}\-(.*?)#{Regexp.quote(File.extname(file_path))}$/, 1]
           output.id = "#{encode.input.id}-#{output.label}"
           output.created_at = encode.created_at
@@ -290,9 +292,13 @@ module ActiveEncode
       end
 
       def sanitize_base(input_url)
+        puts "sanitize_base input_url before"
+        pp input_url
         if input_url.is_a? URI::HTTP
+          puts "input_url IS URI::HTTP"
           File.basename( Addressable::URI.unencode( input_url.path ), File.extname( Addressable::URI.unencode( input_url.path ) ))
         else
+          puts "input_url is NOT NOT NOT  URI::HTTP"
           File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
         end
       end
