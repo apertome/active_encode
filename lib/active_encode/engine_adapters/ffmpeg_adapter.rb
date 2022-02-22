@@ -17,10 +17,11 @@ module ActiveEncode
         when /^file\:\/\/\//
           input_url = Addressable::URI.escape(input_url)
         when /^s3\:\/\//
+          #input_url = Addressable::URI.escape(input_url)
           require 'file_locator'
 
           s3_object = FileLocator::S3File.new(input_url).object
-          input_url = URI.parse(s3_object.presigned_url(:get))
+          input_url = Adressable::URI.unencode( URI.parse(s3_object.presigned_url(:get)) )
         end
 
         new_encode = ActiveEncode::Base.new(input_url, options)
