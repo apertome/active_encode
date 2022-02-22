@@ -2,7 +2,7 @@
 require 'fileutils'
 require 'nokogiri'
 require 'shellwords'
-require 'addressable'
+require 'addressable/uri'
 
 module ActiveEncode
   module EngineAdapters
@@ -21,7 +21,7 @@ module ActiveEncode
           require 'file_locator'
 
           s3_object = FileLocator::S3File.new(input_url).object
-          input_url = Adressable::URI.unencode( URI.parse(s3_object.presigned_url(:get)) )
+          input_url = Addressable::URI.unencode( URI.parse(s3_object.presigned_url(:get)) )
         end
 
         new_encode = ActiveEncode::Base.new(input_url, options)
