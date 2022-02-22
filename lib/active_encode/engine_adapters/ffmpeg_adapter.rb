@@ -291,7 +291,7 @@ module ActiveEncode
 
       def sanitize_base(input_url)
         if input_url.is_a? URI::HTTP
-          File.basename(input_url.path, File.extname(input_url.path))
+          File.basename( Addressable::URI.unencode( input_url.path ), File.extname( Addressable::URI.unencode( input_url.path ) ))
         else
           File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
         end
