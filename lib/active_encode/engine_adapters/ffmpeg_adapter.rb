@@ -13,9 +13,12 @@ module ActiveEncode
 
       def create(input_url, options = {})
         # Decode file uris for ffmpeg (mediainfo works either way)
+        #puts "UNMODIFIED input_url #{input_url}"
         case input_url
         when /^file\:\/\/\//
-          input_url = Addressable::URI.escape(input_url)
+          # puts "original #{URI.decode(input_url)}"
+          input_url = Addressable::URI.unencode(input_url)
+          #input_url = Addressable::URI.escape(input_url)
         when /^s3\:\/\//
           #input_url = Addressable::URI.escape(input_url)
           require 'file_locator'
@@ -24,8 +27,8 @@ module ActiveEncode
           input_url = URI.parse(s3_object.presigned_url(:get))
           # input_url = Addressable::URI.unencode( URI.parse(s3_object.presigned_url(:get)).to_string )
         end
-        puts "NEW_ENCODE INPUT_URL: #{input_url}"
-        pp input_url
+        #puts "NEW_ENCODE INPUT_URL: #{input_url}"
+        #pp input_url
 
         new_encode = ActiveEncode::Base.new(input_url, options)
         new_encode.id = SecureRandom.uuid
@@ -46,11 +49,19 @@ module ActiveEncode
                       else
                         ""
                       end
+        #wp = working_path("", new_encode.id)
+        #puts "WORKING PATH #{wp}"
+        #puts File.exists?(wp)
+        #puts "MEDIAINFO COMMAND"
+        #puts "#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path('input_metadata', new_encode.id)} '#{input_url}'"
         `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{input_url}"`
+        mediainfo_return_code = $?.exitstatus
+        #puts "mediainfo_return_code #{mediainfo_return_code}"
+        # puts "mediainfo_out #{out}"
         new_encode.input = build_input new_encode
-        puts "New encode object:"
-        pp new_encode
-        puts "Writing initial exit status code ... #{new_encode.exit_status}"
+        #puts "New encode object:"
+        #pp new_encode
+        #puts "Writing initial exit status code ... #{new_encode.exit_status}"
         write_exit_status new_encode
 
         if new_encode.input.duration.blank?
@@ -79,11 +90,11 @@ module ActiveEncode
         # Run the ffmpeg command and save its pid
         command = ffmpeg_command(input_url, new_encode.id, options)
         exit_status_file = working_path("exit_status.code", new_encode.id)
-        puts "exit_status_file #{exit_status_file}"
+        #puts "exit_status_file #{exit_status_file}"
         command = "#{command}; echo $? > #{exit_status_file}"
-        puts "Command: #{command}"
+        #puts "Command: #{command}"
         pid = Process.spawn(command, err: working_path('error.log', new_encode.id))
-        puts "pid #{pid}"
+        #puts "pid #{pid}"
 
 ### IDEA: spawn within a spawn??? ####
 
@@ -94,17 +105,17 @@ module ActiveEncode
         #end
         # Get the status (this means wait, opposite of detach)
         Process.detach(pid) if pid.present?
-        # status = Process.wait(pid)
+        #status = Process.wait(pid)
         #status = Process.wait(pid, Process::WNOHANG)
         #puts "pid.present?", pid.present?
         #
-        puts "$?", $?
+        #puts "$?", $?
 
         #code = $?.exitstatus
 
         code = read_exit_status (new_encode.id)
 
-        puts "C0DE: #{code}"
+        #puts "C0DE: #{code}"
         new_encode.exit_status = code
         #puts "exit_status code" + code.to_s
         ##write_exit_status new_encode
@@ -151,7 +162,9 @@ module ActiveEncode
         encode.errors = read_errors(id)
         encode.exit_status = read_exit_status(id)
         if encode.errors.present?
+  # if encode.exit_status != 0
           encode.state = :failed
+          # puts "FAILED ENCODE: #{encode.to_json}"
         elsif running? pid
           encode.state = :running
           encode.current_operations = ["transcoding"]
@@ -258,8 +271,7 @@ module ActiveEncode
           output = ActiveEncode::Output.new
           output.url = "file://#{file_path}"
           sanitized_filename = sanitize_base encode.input.url
-          puts "sanitize_base filname after"
-          pp sanitized_filename
+          #puts "sanitize_base filname after #{sanitized_filename}"
           output.label = file_path[/#{Regexp.quote(sanitized_filename)}\-(.*?)#{Regexp.quote(File.extname(file_path))}$/, 1]
           output.id = "#{encode.input.id}-#{output.label}"
           output.created_at = encode.created_at
@@ -270,7 +282,7 @@ module ActiveEncode
           # Extract technical metadata from output file
           metadata_path = working_path("output_metadata-#{output.label}", id)
           `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{metadata_path} #{output.url}` unless File.file? metadata_path
-          output.assign_tech_metadata(get_tech_metadata(metadata_path))
+          #output.assign_tech_metadata(get_tech_metadata(metadata_path))
 
           outputs << output
         end
@@ -292,13 +304,15 @@ module ActiveEncode
       end
 
       def sanitize_base(input_url)
-        puts "sanitize_base input_url before"
-        pp input_url
+        #puts "sanitize_base input_url before"
+        #pp input_url
         if input_url.is_a? URI::HTTP
-          puts "input_url IS URI::HTTP"
-          File.basename( Addressable::URI.unencode( input_url.path ), File.extname( Addressable::URI.unencode( input_url.path ) ))
+          #puts "input_url IS URI::HTTP"
+          # File.basename(input_url.path, File.extname(input_url.path)) # ORIGINAL
+          File.basename(input_url.path, File.extname(input_url.path))
+          # File.basename( Addressable::URI.unencode( input_url.path ), File.extname( Addressable::URI.unencode( input_url.path ) ))
         else
-          puts "input_url is NOT NOT NOT  URI::HTTP"
+          #puts "input_url is NOT NOT NOT  URI::HTTP"
           File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
         end
       end

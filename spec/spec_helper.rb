@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 require 'coveralls'
+require 'active_support/time'
+
 Coveralls.wear!
 
 require 'bundler/setup'

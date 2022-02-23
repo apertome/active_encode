@@ -2,6 +2,9 @@
 require 'rails_helper'
 require 'active_encode/spec/shared_specs'
 
+# example s3 url TODO: remove
+# s3://masterfiles/uploads/5cb6b01c-95c9-4621-ac83-bbdaa8450078/Secrets of Binary Code.mp4
+
 describe ActiveEncode::EngineAdapters::FfmpegAdapter do
   around do |example|
     ActiveEncode::Base.engine_adapter = :ffmpeg
@@ -20,7 +23,10 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
 
   let!(:work_dir) { stub_const "ActiveEncode::EngineAdapters::FfmpegAdapter::WORK_DIR", @dir }
   let(:file) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'fireworks.mp4').to_s }
+  let(:s3_file) { "s3://masterfiles/uploads/some_id/fireworks.mp4" }
+  let(:s3_file_with_spaces) { "s3://masterfiles/uploads/some_id/file with space.mp4" }
   let(:created_job) do
+    #  puts "created_job file: #{file}"
     ActiveEncode::Base.create(file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: "mp4" }, { label: "high", ffmpeg_opt: "-s 1280x720", extension: "mp4" }])
   end
   let(:running_job) do
@@ -97,6 +103,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       it "returns the encode with correct error" do
         expect(missing_job.errors).to include("#{missing_file} does not exist or is not accessible")
         expect(missing_job.percent_complete).to be 1
+        # expect(missing_job.exit_status).not_to be 0
       end
     end
 
@@ -107,6 +114,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       it "returns the encode with correct error" do
         expect(nonmedia_job.errors).to include("Error inspecting input: #{nonmedia_file}")
         expect(nonmedia_job.percent_complete).to be 1
+        # expect(missing_job.exit_status).not_to be 0
       end
     end
 
@@ -118,6 +126,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       it "does not have errors" do
         sleep 2
         expect(find_space_job.errors).to be_empty
+        # expect(find_space_job.exit_status).to be 0
       end
 
       it "has the input technical metadata in a file" do
@@ -129,7 +138,7 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       end
 
       context 'when uri encoded' do
-        let(:file_with_space) { URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s) }
+        let(:file_with_space) { Addressable::URI.encode("file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s) }
 
         it "does not have errors" do
           sleep 2
