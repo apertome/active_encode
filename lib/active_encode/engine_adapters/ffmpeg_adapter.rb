@@ -13,7 +13,7 @@ module ActiveEncode
 
       def create(input_url, options = {})
         # Decode file uris for ffmpeg (mediainfo works either way)
-        #puts "UNMODIFIED input_url #{input_url}"
+        puts "UNMODIFIED input_url #{input_url}"
         case input_url
         when /^file\:\/\/\//
           # puts "original #{URI.decode(input_url)}"
@@ -27,8 +27,8 @@ module ActiveEncode
           input_url = URI.parse(s3_object.presigned_url(:get))
           # input_url = Addressable::URI.unencode( URI.parse(s3_object.presigned_url(:get)).to_string )
         end
-        #puts "NEW_ENCODE INPUT_URL: #{input_url}"
-        #pp input_url
+        puts "NEW_ENCODE INPUT_URL: #{input_url}"
+        pp input_url
 
         new_encode = ActiveEncode::Base.new(input_url, options)
         new_encode.id = SecureRandom.uuid
@@ -104,7 +104,7 @@ module ActiveEncode
         #  code = new_encode.exit_status
         #end
         # Get the status (this means wait, opposite of detach)
-        Process.detach(pid) if pid.present?
+        #Process.detach(pid) if pid.present?
         #status = Process.wait(pid)
         #status = Process.wait(pid, Process::WNOHANG)
         #puts "pid.present?", pid.present?
@@ -123,20 +123,20 @@ module ActiveEncode
 
         new_encode
 # TODO: reintegrate `rescue` section
-      #rescue StandardError => e
-        #new_encode.state = :failed
+      rescue StandardError => e
+        new_encode.state = :failed
         #status = Process.wait(pid)
         #new_encode.exit_status = status
         #pp status
         #pp $?
-        #new_encode.percent_complete = 1
-        #new_encode.exit_status = 1
-        #new_encode.errors = [e.full_message]
-        #write_errors new_encode
-        #return new_encode
-      #ensure
+        new_encode.percent_complete = 1
+        new_encode.exit_status = 1
+        new_encode.errors = [e.full_message]
+        write_errors new_encode
+        return new_encode
+      ensure
         # Prevent zombie process
-        # Process.detach(pid) if pid.present?
+        Process.detach(pid) if pid.present?
       end
 
       # Return encode object from file system
