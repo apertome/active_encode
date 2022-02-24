@@ -55,7 +55,7 @@ module ActiveEncode
         #puts "MEDIAINFO COMMAND"
         #puts "#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path('input_metadata', new_encode.id)} '#{input_url}'"
         `#{MEDIAINFO_PATH} #{curl_option} --Output=XML --LogFile=#{working_path("input_metadata", new_encode.id)} "#{input_url}"`
-        mediainfo_return_code = $?.exitstatus
+        #mediainfo_return_code = $?.exitstatus
         #puts "mediainfo_return_code #{mediainfo_return_code}"
         # puts "mediainfo_out #{out}"
         new_encode.input = build_input new_encode
@@ -92,7 +92,7 @@ module ActiveEncode
         exit_status_file = working_path("exit_status.code", new_encode.id)
         #puts "exit_status_file #{exit_status_file}"
         command = "#{command}; echo $? > #{exit_status_file}"
-        #puts "Command: #{command}"
+        puts "Command: #{command}"
         pid = Process.spawn(command, err: working_path('error.log', new_encode.id))
         #puts "pid #{pid}"
 
@@ -281,8 +281,29 @@ module ActiveEncode
 
           # Extract technical metadata from output file
           metadata_path = working_path("output_metadata-#{output.label}", id)
+          # metadata_path = metadata_path.gsub(/_/, '__')
+          # output.url = output.url.gsub(/_/, '__')
+          puts "metadata_path, #{metadata_path}"
+          puts "output.url, #{output.url}"
+
+          puts "#{MEDIAINFO_PATH} --Output=XML --LogFile=#{metadata_path} #{output.url}` unless File.file? metadata_path"
           `#{MEDIAINFO_PATH} --Output=XML --LogFile=#{metadata_path} #{output.url}` unless File.file? metadata_path
-          #output.assign_tech_metadata(get_tech_metadata(metadata_path))
+          output.assign_tech_metadata(get_tech_metadata(metadata_path))
+          out_mediainfo_success = $?.exitstatus
+          puts "out_mediainfo_success #{out_mediainfo_success}"
+
+          #output_exists = output.file_size.empty?
+          file_size = output.file_size
+          #puts "output_exists #{output_exists}"
+          puts "file_size #{file_size}"
+          puts "file_size.blank? #{file_size.blank?}"
+
+          puts "OUT OUTPUT"
+          pp output.to_s
+          puts output.to_json
+
+
+          #mediainfo --Output=XML --LogFile=/tmp/d20220224-491470-14q7q4u/a94b1629-1850-4633-8725-f658dbfa265e/output_metadata-low file:///tmp/d20220224-491470-14q7q4u/a94b1629-1850-4633-8725-f658dbfa265e/outputs/file__with__space-low.mp4
 
           outputs << output
         end
