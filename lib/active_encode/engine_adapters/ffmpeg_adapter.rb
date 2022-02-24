@@ -20,11 +20,12 @@ module ActiveEncode
           input_url = Addressable::URI.unencode(input_url)
           #input_url = Addressable::URI.escape(input_url)
         when /^s3\:\/\//
-          #input_url = Addressable::URI.escape(input_url)
+          # input_url = Addressable::URI.unencode(input_url)
           require 'file_locator'
 
           s3_object = FileLocator::S3File.new(input_url).object
           input_url = URI.parse(s3_object.presigned_url(:get))
+          # input_url = Addressable::URI.unencode( input_url )
           # input_url = Addressable::URI.unencode( URI.parse(s3_object.presigned_url(:get)).to_string )
         end
         puts "NEW_ENCODE INPUT_URL: #{input_url}"
@@ -298,6 +299,11 @@ module ActiveEncode
           puts "file_size #{file_size}"
           puts "file_size.blank? #{file_size.blank?}"
 
+          # encode.errors.push( "Error: output file not found #{output.url}" ) if file_size.blank?
+          # write_errors encode
+
+          # puts "encode in OUTPUT"
+          # pp encode
           puts "OUT OUTPUT"
           pp output.to_s
           puts output.to_json
@@ -327,13 +333,17 @@ module ActiveEncode
       def sanitize_base(input_url)
         #puts "sanitize_base input_url before"
         #pp input_url
+        # TODO: may need to parse this style URL https://hostname.s3.amazonaws.com/uploads/some_id/fireworks%20space.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAQSKPOHYKP7OR6FNM%2F20220224%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20220224T222741Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Signature=df7ee82d35c4365ff408d79d7f85adb887d425813fe939674076cb24a1220aa2
         if input_url.is_a? URI::HTTP
-          #puts "input_url IS URI::HTTP"
+          puts "input_url IS URI::HTTP"
+          pp input_url
           # File.basename(input_url.path, File.extname(input_url.path)) # ORIGINAL
-          File.basename(input_url.path, File.extname(input_url.path))
+          base_filename = File.basename(input_url.path, File.extname(input_url.path))
+          base_filename = Addressable::URI.unencode base_filename
+          base_filename
           # File.basename( Addressable::URI.unencode( input_url.path ), File.extname( Addressable::URI.unencode( input_url.path ) ))
         else
-          #puts "input_url is NOT NOT NOT  URI::HTTP"
+          puts "input_url is NOT NOT NOT  URI::HTTP"
           File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
         end
       end

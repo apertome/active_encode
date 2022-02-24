@@ -153,46 +153,46 @@ describe ActiveEncode::EngineAdapters::FfmpegAdapter do
       end
     end
 
-    # let(:s3_file) { "s3://hostname/uploads/some_id/fireworks.mp4" }
-    # let(:s3_file_with_spaces) { "s3://hostname/uploads/some_id/file with space.mp4" }
-    # context "input s3 uri" do
-    #   # let(:file_with_space) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s }
-    #   let!(:create_space_job) { ActiveEncode::Base.create(s3_file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
-    #   let(:find_space_job) { ActiveEncode::Base.find create_space_job.id }
-    #
-    #   it "does not have errors" do
-    #     sleep 2
-    #     puts "s3 file found"
-    #     pp find_space_job
-    #     expect(find_space_job.errors).to be_empty
-    #     # expect(find_space_job.exit_status).to be 0
-    #   end
-    #
-    #   it "has the input technical metadata in a file" do
-    #     expect(File.read("#{work_dir}/#{create_space_job.id}/input_metadata")).not_to be_empty
-    #   end
-    #
-    #   it "has the pid in a file" do
-    #     expect(File.read("#{work_dir}/#{create_space_job.id}/pid")).not_to be_empty
-    #   end
-    #
-    #   context 'when uri encoded' do
-    #     let(:s3_file) { Addressable::URI.encode( "s3://hostname/uploads/some_id/fireworks.mp4" ) }
-    #
-    #     it "does not have errors" do
-    #       sleep 2
-    #       expect(find_space_job.errors).to be_empty
-    #     end
-    #
-    #     it "has the input technical metadata in a file" do
-    #       expect(File.read("#{work_dir}/#{create_space_job.id}/input_metadata")).not_to be_empty
-    #     end
-    #
-    #     it "has the pid in a file" do
-    #       expect(File.read("#{work_dir}/#{create_space_job.id}/pid")).not_to be_empty
-    #     end
-    #   end
-    # end
+    let(:s3_file) { "s3://hostname/uploads/some_id/fireworks space.mp4" }
+    let(:s3_file_with_spaces) { "s3://hostname/uploads/some_id/file with space.mp4" }
+    context "input s3 uri" do
+      # let(:file_with_space) { "file://" + Rails.root.join('..', 'spec', 'fixtures', 'file with space.mp4').to_s }
+      let!(:create_space_job) { ActiveEncode::Base.create(s3_file, outputs: [{ label: "low", ffmpeg_opt: "-s 640x480", extension: 'mp4' }]) }
+      let(:find_space_job) { ActiveEncode::Base.find create_space_job.id }
+
+      it "does not have errors" do
+        sleep 2
+        puts "s3 file found"
+        pp find_space_job
+        expect(find_space_job.errors).to be_empty
+        # expect(find_space_job.exit_status).to be 0
+      end
+
+      it "has the input technical metadata in a file" do
+        expect(File.read("#{work_dir}/#{create_space_job.id}/input_metadata")).not_to be_empty
+      end
+
+      it "has the pid in a file" do
+        expect(File.read("#{work_dir}/#{create_space_job.id}/pid")).not_to be_empty
+      end
+
+      context 'when uri encoded' do
+        let(:s3_file) { Addressable::URI.encode( "s3://hostname/uploads/some_id/fireworks.mp4" ) }
+
+        it "does not have errors" do
+          sleep 2
+          expect(find_space_job.errors).to be_empty
+        end
+
+        it "has the input technical metadata in a file" do
+          expect(File.read("#{work_dir}/#{create_space_job.id}/input_metadata")).not_to be_empty
+        end
+
+        it "has the pid in a file" do
+          expect(File.read("#{work_dir}/#{create_space_job.id}/pid")).not_to be_empty
+        end
+      end
+    end
 
 
 

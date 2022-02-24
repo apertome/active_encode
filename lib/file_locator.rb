@@ -33,7 +33,7 @@ class FileLocator
           @uri = Addressable::URI.parse(encoded_source)
         rescue URI::InvalidURIError
           if encoded_source == source
-            encoded_source = URI.encode(encoded_source)
+            encoded_source = Addressable::URI.encode(encoded_source)
             retry
           else
             raise
@@ -51,7 +51,7 @@ class FileLocator
     when 's3'
       S3File.new(uri).object.presigned_url(:get)
     when 'file'
-      URI.decode(uri.path)
+      Addressable::URI.unencode(uri.path)
     else
       @uri.to_s
     end
