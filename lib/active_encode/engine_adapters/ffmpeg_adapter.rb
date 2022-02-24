@@ -340,6 +340,7 @@ module ActiveEncode
           # File.basename(input_url.path, File.extname(input_url.path)) # ORIGINAL
           base_filename = File.basename(input_url.path, File.extname(input_url.path))
           base_filename = Addressable::URI.unencode base_filename
+          base_filename = base_filename.gsub(/[^0-9A-Za-z.\-]/, '_')
           base_filename
           # File.basename( Addressable::URI.unencode( input_url.path ), File.extname( Addressable::URI.unencode( input_url.path ) ))
         else
