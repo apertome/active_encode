@@ -322,8 +322,8 @@ module ActiveEncode
       def ffmpeg_command(input_url, id, opts)
         output_opt = opts[:outputs].collect do |output|
           sanitized_filename = sanitize_base input_url
-          # sanitized_filename.gsub(/\?.+$/, '')
-          # sanitized_filename = Addressable::URI.unencode sanitized_filename
+          sanitized_filename = sanitized_filename.gsub(/\?.+$/, '')
+          #sanitized_filename = Addressable::URI.unencode sanitized_filename
           file_name = "outputs/#{sanitized_filename}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
@@ -339,7 +339,7 @@ module ActiveEncode
         #puts "sanitize_base input_url before"
         #pp input_url
         # TODO: may need to parse this style URL https://hostname.s3.amazonaws.com/uploads/some_id/fireworks%20space.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAQSKPOHYKP7OR6FNM%2F20220224%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20220224T222741Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Signature=df7ee82d35c4365ff408d79d7f85adb887d425813fe939674076cb24a1220aa2
-        if input_url.is_a? URI::HTTP or input_url.is_a? URI::HTTPS
+        if input_url.is_a? URI::HTTP
           puts "input_url IS URI::HTTP"
           pp input_url
           # File.basename(input_url.path, File.extname(input_url.path)) # ORIGINAL
@@ -347,14 +347,14 @@ module ActiveEncode
           base_filename = Addressable::URI.unencode base_filename
           base_filename = base_filename.gsub(/[^0-9A-Za-z.\-]/, '_')
           #base_filename = base_filename.gsub(/\?.+$/, '')
-          base_filename = Addressable::URI.unencode base_filename
+          # base_filename = Addressable::URI.unencode base_filename
           sanitized = base_filename
           # File.basename( Addressable::URI.unencode( input_url.path ), File.extname( Addressable::URI.unencode( input_url.path ) ))
         else
           puts "input_url is NOT NOT NOT  URI::HTTP"
           sanitized = File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
           #sanitized = sanitized.gsub(/\?.+$/, '')
-          sanitize = Addressable::URI.unencode sanitized
+          #sanitize = Addressable::URI.unencode sanitized
         end
         puts "Sanitized basename: #{sanitized}"
         sanitized
