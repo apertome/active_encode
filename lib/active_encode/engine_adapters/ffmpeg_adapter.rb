@@ -346,14 +346,14 @@ module ActiveEncode
           base_filename = File.basename(input_url.path, File.extname(input_url.path))
           base_filename = Addressable::URI.unencode base_filename
           base_filename = base_filename.gsub(/[^0-9A-Za-z.\-]/, '_')
-          base_filename = base_filename.gsub(/\?.+$/, '')
+          #base_filename = base_filename.gsub(/\?.+$/, '')
           base_filename = Addressable::URI.unencode base_filename
           sanitized = base_filename
           # File.basename( Addressable::URI.unencode( input_url.path ), File.extname( Addressable::URI.unencode( input_url.path ) ))
         else
           puts "input_url is NOT NOT NOT  URI::HTTP"
           sanitized = File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
-          sanitized = sanitized.gsub(/\?.+$/, '')
+          #sanitized = sanitized.gsub(/\?.+$/, '')
           sanitize = Addressable::URI.unencode sanitized
         end
         puts "Sanitized basename: #{sanitized}"
