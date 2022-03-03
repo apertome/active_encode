@@ -26,10 +26,12 @@ module ActiveEncode
 
           s3_object = FileLocator::S3File.new(input_url).object
           input_url = URI.parse(s3_object.presigned_url(:get))
-          input_url = Addressable::URI.encode( input_url )
+          #input_url = Addressable::URI.encode( input_url )
           # input_url = Addressable::URI.unencode(input_url)
           # input_url = Addressable::URI.unencode( input_url )
           # input_url = Addressable::URI.unencode( URI.parse(s3_object.presigned_url(:get)).to_string )
+        when /^http\:\/\//
+          input_url = Addressable::URI.encode(input_url)
         end
         puts "NEW_ENCODE INPUT_URL: #{input_url}"
         pp input_url
