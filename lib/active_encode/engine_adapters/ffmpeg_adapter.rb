@@ -20,11 +20,13 @@ module ActiveEncode
           input_url = Addressable::URI.unencode(input_url)
           #input_url = Addressable::URI.escape(input_url)
         when /^s3\:\/\//
-          # input_url = Addressable::URI.unencode(input_url)
+          input_url = Addressable::URI.encode( input_url )
+
           require 'file_locator'
 
           s3_object = FileLocator::S3File.new(input_url).object
           input_url = URI.parse(s3_object.presigned_url(:get))
+          # input_url = Addressable::URI.unencode(input_url)
           # input_url = Addressable::URI.unencode( input_url )
           # input_url = Addressable::URI.unencode( URI.parse(s3_object.presigned_url(:get)).to_string )
         end
@@ -60,8 +62,8 @@ module ActiveEncode
         #puts "mediainfo_return_code #{mediainfo_return_code}"
         # puts "mediainfo_out #{out}"
         new_encode.input = build_input new_encode
-        #puts "New encode object:"
-        #pp new_encode
+        puts "New encode object:"
+        pp new_encode
         #puts "Writing initial exit status code ... #{new_encode.exit_status}"
         write_exit_status new_encode
 
@@ -272,7 +274,7 @@ module ActiveEncode
           output = ActiveEncode::Output.new
           output.url = "file://#{file_path}"
           sanitized_filename = sanitize_base encode.input.url
-          #puts "sanitize_base filname after #{sanitized_filename}"
+          puts "sanitize_base filename after #{sanitized_filename}"
           output.label = file_path[/#{Regexp.quote(sanitized_filename)}\-(.*?)#{Regexp.quote(File.extname(file_path))}$/, 1]
           output.id = "#{encode.input.id}-#{output.label}"
           output.created_at = encode.created_at
@@ -320,6 +322,8 @@ module ActiveEncode
       def ffmpeg_command(input_url, id, opts)
         output_opt = opts[:outputs].collect do |output|
           sanitized_filename = sanitize_base input_url
+          sanitized_filename.gsub(/\?.+$/, '')
+          sanitized_filename = Addressable::URI.unencode sanitized_filename
           file_name = "outputs/#{sanitized_filename}-#{output[:label]}.#{output[:extension]}"
           " #{output[:ffmpeg_opt]} #{working_path(file_name, id)}"
         end.join(" ")
@@ -331,22 +335,25 @@ module ActiveEncode
       end
 
       def sanitize_base(input_url)
+        sanitized = input_url
         #puts "sanitize_base input_url before"
         #pp input_url
         # TODO: may need to parse this style URL https://hostname.s3.amazonaws.com/uploads/some_id/fireworks%20space.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAQSKPOHYKP7OR6FNM%2F20220224%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20220224T222741Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Signature=df7ee82d35c4365ff408d79d7f85adb887d425813fe939674076cb24a1220aa2
-        if input_url.is_a? URI::HTTP
+        if input_url.is_a? URI::HTTP or input_url.is_a? URI::HTTPS
           puts "input_url IS URI::HTTP"
           pp input_url
           # File.basename(input_url.path, File.extname(input_url.path)) # ORIGINAL
           base_filename = File.basename(input_url.path, File.extname(input_url.path))
           base_filename = Addressable::URI.unencode base_filename
           base_filename = base_filename.gsub(/[^0-9A-Za-z.\-]/, '_')
-          base_filename
+          sanitized = base_filename
           # File.basename( Addressable::URI.unencode( input_url.path ), File.extname( Addressable::URI.unencode( input_url.path ) ))
         else
           puts "input_url is NOT NOT NOT  URI::HTTP"
-          File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
+          sanitized = File.basename(input_url, File.extname(input_url)).gsub(/[^0-9A-Za-z.\-]/, '_')
         end
+        puts "Sanitized basename: #{sanitized}"
+        sanitized
       end
 
       def get_pid(id)
